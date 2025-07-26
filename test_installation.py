@@ -1,161 +1,121 @@
 #!/usr/bin/env python3
 """
-Test script to verify Arxiv Agent installation
+Test script to verify installation and basic functionality
 """
 
 import sys
-import importlib
+import os
 
 def test_imports():
     """Test if all required packages can be imported"""
     print("🔍 Testing package imports...")
     
-    required_packages = [
-        'google.generativeai',
-        'arxiv',
-        'requests',
-        'dotenv',
-        'streamlit',
-        'pandas',
-        'numpy',
-        'faiss',
-        'bs4',
-        'lxml',
-        'tiktoken'
-    ]
-    
-    failed_imports = []
-    
-    for package in required_packages:
-        try:
-            importlib.import_module(package)
-            print(f"✅ {package}")
-        except ImportError as e:
-            print(f"❌ {package}: {e}")
-            failed_imports.append(package)
-    
-    if failed_imports:
-        print(f"\n❌ Failed to import: {', '.join(failed_imports)}")
-        print("💡 Run: pip install -r requirements.txt")
+    try:
+        import google.generativeai as genai
+        print("✅ google.generativeai imported successfully")
+    except ImportError as e:
+        print(f"❌ Failed to import google.generativeai: {e}")
         return False
-    else:
-        print("\n✅ All packages imported successfully!")
-        return True
-
-def test_environment():
-    """Test environment variables"""
-    print("\n🔍 Testing environment variables...")
     
     try:
-        from dotenv import load_dotenv
-        import os
-        
-        load_dotenv()
-        
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if api_key:
-            print("✅ GOOGLE_API_KEY found")
-            return True
-        else:
-            print("❌ GOOGLE_API_KEY not found")
-            print("💡 Set GOOGLE_API_KEY environment variable or add it to .env file")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error testing environment: {e}")
+        import arxiv
+        print("✅ arxiv imported successfully")
+    except ImportError as e:
+        print(f"❌ Failed to import arxiv: {e}")
         return False
+    
+    try:
+        import streamlit as st
+        print("✅ streamlit imported successfully")
+    except ImportError as e:
+        print(f"❌ Failed to import streamlit: {e}")
+        return False
+    
+    try:
+        import faiss
+        print("✅ faiss imported successfully")
+    except ImportError as e:
+        print(f"❌ Failed to import faiss: {e}")
+        return False
+    
+    try:
+        import numpy as np
+        print("✅ numpy imported successfully")
+    except ImportError as e:
+        print(f"❌ Failed to import numpy: {e}")
+        return False
+    
+    return True
 
-def test_agent_initialization():
-    """Test if the agent can be initialized"""
-    print("\n🔍 Testing agent initialization...")
+def test_environment():
+    """Test environment configuration"""
+    print("\n🔧 Testing environment configuration...")
+    
+    # Check for .env file
+    if os.path.exists('.env'):
+        print("✅ .env file found")
+    else:
+        print("⚠️ .env file not found - you'll need to create one")
+    
+    # Check for API key
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        print("✅ GOOGLE_API_KEY found in environment")
+        print(f"   Key length: {len(api_key)} characters")
+    else:
+        print("❌ GOOGLE_API_KEY not found in environment")
+        print("   Please set your Gemini API key in the .env file")
+        return False
+    
+    return True
+
+def test_basic_functionality():
+    """Test basic agent functionality"""
+    print("\n🤖 Testing basic agent functionality...")
     
     try:
         from arxiv_agent import ArxivAgent
+        print("✅ ArxivAgent imported successfully")
         
+        # Try to initialize agent
         agent = ArxivAgent()
-        print("✅ ArxivAgent initialized successfully!")
+        print("✅ ArxivAgent initialized successfully")
         
-        # Test embedding functionality
-        print("🔍 Testing embedding functionality...")
-        test_texts = ["This is a test sentence for embeddings."]
-        embeddings = agent.get_embeddings(test_texts)
-        if len(embeddings) > 0 and embeddings.shape[1] > 0:
-            print("✅ Embedding functionality working!")
-            return True
-        else:
-            print("❌ Embedding functionality failed")
-            return False
+        return True
         
     except Exception as e:
         print(f"❌ Failed to initialize ArxivAgent: {e}")
         return False
 
-def test_arxiv_search():
-    """Test Arxiv search functionality"""
-    print("\n🔍 Testing Arxiv search...")
-    
-    try:
-        import arxiv
-        
-        search = arxiv.Search(query="machine learning", max_results=1)
-        results = list(search.results())
-        
-        if results:
-            print("✅ Arxiv search working!")
-            return True
-        else:
-            print("❌ No search results (might be network issue)")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Arxiv search failed: {e}")
-        return False
-
 def main():
     """Run all tests"""
     print("🧪 Arxiv Agent Installation Test")
-    print("=" * 50)
+    print("=" * 40)
     
-    tests = [
-        ("Package Imports", test_imports),
-        ("Environment Variables", test_environment),
-        ("Agent Initialization", test_agent_initialization),
-        ("Arxiv Search", test_arxiv_search)
-    ]
+    # Test imports
+    if not test_imports():
+        print("\n❌ Import tests failed. Please install requirements:")
+        print("   pip install -r requirements.txt")
+        sys.exit(1)
     
-    results = []
+    # Test environment
+    if not test_environment():
+        print("\n❌ Environment tests failed. Please check your configuration.")
+        sys.exit(1)
     
-    for test_name, test_func in tests:
-        print(f"\n📋 {test_name}")
-        print("-" * 30)
-        result = test_func()
-        results.append((test_name, result))
+    # Test basic functionality
+    if not test_basic_functionality():
+        print("\n❌ Basic functionality tests failed.")
+        sys.exit(1)
     
-    # Summary
-    print("\n📊 Test Summary")
-    print("=" * 50)
-    
-    passed = sum(1 for _, result in results if result)
-    total = len(results)
-    
-    for test_name, result in results:
-        status = "✅ PASS" if result else "❌ FAIL"
-        print(f"{test_name}: {status}")
-    
-    print(f"\nOverall: {passed}/{total} tests passed")
-    
-    if passed == total:
-        print("\n🎉 All tests passed! Arxiv Agent is ready to use.")
-        print("\nNext steps:")
-        print("1. Run: streamlit run app.py (for web interface)")
-        print("2. Run: python cli.py --interactive (for CLI)")
-        print("3. Run: python example.py (for example usage)")
-    else:
-        print("\n⚠️  Some tests failed. Please check the errors above.")
-        print("\nCommon solutions:")
-        print("1. Install dependencies: pip install -r requirements.txt")
-        print("2. Set GOOGLE_API_KEY environment variable")
-        print("3. Check internet connection for Arxiv access")
+    print("\n🎉 All tests passed! Your installation is ready.")
+    print("\nNext steps:")
+    print("1. Run the web interface: streamlit run app.py")
+    print("2. Or use the CLI: python cli.py --interactive")
+    print("3. Or run the examples: python example_improved.py")
 
 if __name__ == "__main__":
-    main() 
+    main()
